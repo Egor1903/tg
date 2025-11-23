@@ -35,9 +35,15 @@ load_dotenv()
 # Настройка логирования
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler()  # Вывод в stdout для Scalingo
+    ],
+    force=True  # Переопределить существующую конфигурацию
 )
 logger = logging.getLogger(__name__)
+# Настройка логирования для aiogram
+logging.getLogger('aiogram').setLevel(logging.INFO)
 
 # Определяем абсолютный путь к логотипу
 LOGO_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logo.png')
@@ -1764,11 +1770,18 @@ async def main():
 
     logger.info(f"Логотип найден: {LOGO_PATH}")
     logger.info("Бот запущен")
+    logger.info("Ожидание сообщений...")
+    
+    # Выводим информацию о подключенных дисках
+    logger.info(f"Подключено Яндекс.Дисков: {len(y_disks)}")
+    for disk_id in y_disks.keys():
+        logger.info(f"  - {YANDEX_DISKS[disk_id]['name']}")
 
     asyncio.create_task(cleanup_sessions())
     asyncio.create_task(cleanup_analytics())
 
     try:
+        logger.info("Начало polling...")
         await dp.start_polling(bot)
     except Exception as e:
         logger.error(f"Ошибка при работе бота: {e}")
